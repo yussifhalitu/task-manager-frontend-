@@ -15,8 +15,8 @@ function Dashboard() {
   // Load tasks when page opens
   useEffect(() => {
     fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
-
   const fetchTasks = async () => {
     try {
       const res = await getTasks(filter);
