@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getTasks, createTask, deleteTask, markDone } from '../api';
 import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
-  const [tasks,   setTasks]   = useState([]);
-  const [title,   setTitle]   = useState('');
+  const [tasks,    setTasks]    = useState([]);
+  const [title,    setTitle]    = useState('');
   const [priority, setPriority] = useState('medium');
-  const [filter,  setFilter]  = useState(undefined);
-  const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(false);
+  const [filter,   setFilter]   = useState(undefined);
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
   const navigate  = useNavigate();
   const username  = localStorage.getItem('username');
 
-  // Load tasks when page opens
-  useEffect(() => {
-    fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
-  const fetchTasks = async () => {
+  // useCallback prevents fetchTasks from changing on every render
+  const fetchTasks = useCallback(async () => {
     try {
       const res = await getTasks(filter);
       setTasks(res.data.tasks);
     } catch (err) {
       setError('Failed to load tasks');
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -67,7 +67,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
-      {/* Header */}
       <div className="header">
         <h1>My Tasks</h1>
         <div>
@@ -78,7 +77,6 @@ function Dashboard() {
 
       {error && <p className="error">{error}</p>}
 
-      {/* Create Task Form */}
       <div className="create-form">
         <form onSubmit={handleCreate}>
           <input
@@ -99,14 +97,12 @@ function Dashboard() {
         </form>
       </div>
 
-      {/* Filter Buttons */}
       <div className="filters">
         <button onClick={() => setFilter(undefined)} className={filter === undefined ? 'active' : ''}>All</button>
         <button onClick={() => setFilter(false)}     className={filter === false ? 'active' : ''}>Pending</button>
         <button onClick={() => setFilter(true)}      className={filter === true ? 'active' : ''}>Completed</button>
       </div>
 
-      {/* Task List */}
       <div className="task-list">
         {tasks.length === 0 && <p className="empty">No tasks yet. Add one above!</p>}
         {tasks.map((task) => (
