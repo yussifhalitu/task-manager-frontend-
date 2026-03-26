@@ -3,15 +3,15 @@ import { getTasks, createTask, deleteTask, markDone, updateTask } from '../api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-function Dashboard() {
-  const [tasks,       setTasks]       = useState([]);
-  const [title,       setTitle]       = useState('');
-  const [priority,    setPriority]    = useState('medium');
-  const [filter,      setFilter]      = useState(undefined);
-  const [loading,     setLoading]     = useState(false);
-  const [editingTask, setEditingTask] = useState(null);   // task being edited
-  const [editTitle,   setEditTitle]   = useState('');
-  const [editPriority,setEditPriority]= useState('medium');
+function Dashboard({ darkMode, setDarkMode }) {
+  const [tasks,        setTasks]        = useState([]);
+  const [title,        setTitle]        = useState('');
+  const [priority,     setPriority]     = useState('medium');
+  const [filter,       setFilter]       = useState(undefined);
+  const [loading,      setLoading]      = useState(false);
+  const [editingTask,  setEditingTask]  = useState(null);
+  const [editTitle,    setEditTitle]    = useState('');
+  const [editPriority, setEditPriority] = useState('medium');
   const navigate = useNavigate();
   const username = localStorage.getItem('username');
 
@@ -64,21 +64,18 @@ function Dashboard() {
     }
   };
 
-  // Open edit mode for a task
   const handleEditOpen = (task) => {
     setEditingTask(task.id);
     setEditTitle(task.title);
     setEditPriority(task.priority);
   };
 
-  // Cancel edit mode
   const handleEditCancel = () => {
     setEditingTask(null);
     setEditTitle('');
     setEditPriority('medium');
   };
 
-  // Save edited task
   const handleEditSave = async (task) => {
     try {
       await updateTask(task.id, {
@@ -107,8 +104,15 @@ function Dashboard() {
       {/* Header */}
       <div className="header">
         <h1>My Tasks</h1>
-        <div>
+        <div className="header-actions">
           <span>Welcome, {username}!</span>
+          {/* Dark mode toggle */}
+          <button
+            className="theme-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
           <button onClick={handleLogout} className="logout-btn">Logout</button>
         </div>
       </div>
@@ -146,8 +150,6 @@ function Dashboard() {
         {tasks.length === 0 && <p className="empty">No tasks yet. Add one above!</p>}
         {tasks.map((task) => (
           <div key={task.id} className={`task-card ${task.done ? 'done' : ''}`}>
-
-            {/* EDIT MODE */}
             {editingTask === task.id ? (
               <div className="edit-form">
                 <input
@@ -168,10 +170,7 @@ function Dashboard() {
                   <button onClick={handleEditCancel}            className="delete-btn">Cancel</button>
                 </div>
               </div>
-
             ) : (
-
-              /* NORMAL MODE */
               <>
                 <div className="task-info">
                   <h3>{task.title}</h3>
@@ -181,8 +180,8 @@ function Dashboard() {
                 <div className="task-actions">
                   {!task.done && (
                     <>
-                      <button onClick={() => handleDone(task.id)}     className="done-btn">✓ Done</button>
-                      <button onClick={() => handleEditOpen(task)}     className="edit-btn">✎ Edit</button>
+                      <button onClick={() => handleDone(task.id)}  className="done-btn">✓ Done</button>
+                      <button onClick={() => handleEditOpen(task)}  className="edit-btn">✎ Edit</button>
                     </>
                   )}
                   <button onClick={() => handleDelete(task.id)} className="delete-btn">✕ Delete</button>

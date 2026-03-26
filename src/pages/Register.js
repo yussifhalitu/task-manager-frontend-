@@ -3,7 +3,7 @@ import { register } from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-function Register() {
+function Register({ darkMode, setDarkMode }) {
   const [form,    setForm]    = useState({ username: '', password: '', full_name: '', email: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -28,6 +28,14 @@ function Register() {
 
   return (
     <div className="auth-container">
+      {/* Dark mode toggle */}
+      <button
+        className="theme-toggle"
+        onClick={() => setDarkMode(!darkMode)}
+      >
+        {darkMode ? '☀️ Light' : '🌙 Dark'}
+      </button>
+
       <div className="auth-box">
         <h1>Task Manager</h1>
         <h2>Create Account</h2>

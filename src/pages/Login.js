@@ -3,7 +3,7 @@ import { login } from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-function Login() {
+function Login({ darkMode, setDarkMode }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading,  setLoading]  = useState(false);
@@ -27,6 +27,14 @@ function Login() {
 
   return (
     <div className="auth-container">
+      {/* Dark mode toggle */}
+      <button
+        className="theme-toggle"
+        onClick={() => setDarkMode(!darkMode)}
+      >
+        {darkMode ? '☀️ Light' : '🌙 Dark'}
+      </button>
+
       <div className="auth-box">
         <h1>Task Manager</h1>
         <h2>Login</h2>

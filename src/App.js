@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
@@ -11,9 +11,19 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
+  // Load dark mode preference from localStorage
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem('darkMode') === 'true'
+  );
+
+  useEffect(() => {
+    // Save preference and apply to body
+    localStorage.setItem('darkMode', darkMode);
+    document.body.className = darkMode ? 'dark' : '';
+  }, [darkMode]);
+
   return (
     <BrowserRouter>
-      {/* Toast notifications appear here */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -22,11 +32,11 @@ function App() {
         }}
       />
       <Routes>
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login"    element={<Login darkMode={darkMode} setDarkMode={setDarkMode} />} />
+        <Route path="/register" element={<Register darkMode={darkMode} setDarkMode={setDarkMode} />} />
         <Route path="/dashboard" element={
           <PrivateRoute>
-            <Dashboard />
+            <Dashboard darkMode={darkMode} setDarkMode={setDarkMode} />
           </PrivateRoute>
         } />
         <Route path="*" element={<Navigate to="/login" />} />
