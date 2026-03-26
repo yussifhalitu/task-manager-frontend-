@@ -3,16 +3,15 @@ import { getTasks, createTask, deleteTask, markDone, updateTask } from '../api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// Helper to calculate days remaining
 function getDueStatus(due_date) {
   if (!due_date) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const due   = new Date(due_date);
+  const due = new Date(due_date);
   due.setHours(0, 0, 0, 0);
-  const diff  = Math.round((due - today) / (1000 * 60 * 60 * 24));
+  const diff = Math.round((due - today) / (1000 * 60 * 60 * 24));
 
-  if (diff < 0)  return { label: `Overdue by ${Math.abs(diff)} day(s)`, type: 'overdue' };
+  if (diff < 0)   return { label: `Overdue by ${Math.abs(diff)} day(s)`, type: 'overdue' };
   if (diff === 0) return { label: 'Due today!', type: 'today' };
   if (diff <= 3)  return { label: `${diff} day(s) left`, type: 'soon' };
   return           { label: `${diff} days left`, type: 'ok' };
@@ -21,14 +20,18 @@ function getDueStatus(due_date) {
 function Dashboard({ darkMode, setDarkMode }) {
   const [tasks,        setTasks]        = useState([]);
   const [title,        setTitle]        = useState('');
+  const [description,  setDescription]  = useState('');
   const [priority,     setPriority]     = useState('medium');
   const [dueDate,      setDueDate]      = useState('');
   const [filter,       setFilter]       = useState(undefined);
+  const [search,       setSearch]       = useState('');
   const [loading,      setLoading]      = useState(false);
   const [editingTask,  setEditingTask]  = useState(null);
   const [editTitle,    setEditTitle]    = useState('');
+  const [editDesc,     setEditDesc]     = useState('');
   const [editPriority, setEditPriority] = useState('medium');
   const [editDueDate,  setEditDueDate]  = useState('');
+  const [showForm,     setShowForm]     = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem('username');
 
@@ -45,6 +48,20 @@ function Dashboard({ darkMode, setDarkMode }) {
     fetchTasks();
   }, [fetchTasks]);
 
+  // Filter tasks by search
+  const filteredTasks = tasks.filter(task =>
+    task.title.toLowerCase().includes(search.toLowerCase()) ||
+    (task.description && task.description.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  // Statistics
+  const stats = {
+    total:   tasks.length,
+    done:    tasks.filter(t => t.done).length,
+    pending: tasks.filter(t => !t.done).length,
+    overdue: tasks.filter(t => !t.done && getDueStatus(t.due_date)?.type === 'overdue').length,
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -52,11 +69,14 @@ function Dashboard({ darkMode, setDarkMode }) {
     try {
       await createTask({
         title,
+        description: description || null,
         priority,
         due_date: dueDate || null
       });
       setTitle('');
+      setDescription('');
       setDueDate('');
+      setShowForm(false);
       toast.success('Task created!');
       fetchTasks();
     } catch (err) {
@@ -89,6 +109,7 @@ function Dashboard({ darkMode, setDarkMode }) {
   const handleEditOpen = (task) => {
     setEditingTask(task.id);
     setEditTitle(task.title);
+    setEditDesc(task.description || '');
     setEditPriority(task.priority);
     setEditDueDate(task.due_date || '');
   };
@@ -96,6 +117,7 @@ function Dashboard({ darkMode, setDarkMode }) {
   const handleEditCancel = () => {
     setEditingTask(null);
     setEditTitle('');
+    setEditDesc('');
     setEditPriority('medium');
     setEditDueDate('');
   };
@@ -104,9 +126,9 @@ function Dashboard({ darkMode, setDarkMode }) {
     try {
       await updateTask(task.id, {
         title:       editTitle,
+        description: editDesc || null,
         priority:    editPriority,
         done:        task.done,
-        description: task.description,
         due_date:    editDueDate || null
       });
       toast.success('Task updated!');
@@ -126,6 +148,7 @@ function Dashboard({ darkMode, setDarkMode }) {
 
   return (
     <div className="dashboard">
+
       {/* Header */}
       <div className="header">
         <h1>My Tasks</h1>
@@ -138,106 +161,34 @@ function Dashboard({ darkMode, setDarkMode }) {
         </div>
       </div>
 
-      {/* Create Task Form */}
-      <div className="create-form">
-        <form onSubmit={handleCreate}>
-          <input
-            type="text"
-            placeholder="Add a new task..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            title="Due date (optional)"
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Adding...' : 'Add Task'}
-          </button>
-        </form>
+      {/* Statistics */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <span className="stat-number">{stats.total}</span>
+          <span className="stat-label">Total</span>
+        </div>
+        <div className="stat-card done">
+          <span className="stat-number">{stats.done}</span>
+          <span className="stat-label">Done</span>
+        </div>
+        <div className="stat-card pending">
+          <span className="stat-number">{stats.pending}</span>
+          <span className="stat-label">Pending</span>
+        </div>
+        <div className="stat-card overdue">
+          <span className="stat-number">{stats.overdue}</span>
+          <span className="stat-label">Overdue</span>
+        </div>
       </div>
 
-      {/* Filter Buttons */}
-      <div className="filters">
-        <button onClick={() => setFilter(undefined)} className={filter === undefined ? 'active' : ''}>All</button>
-        <button onClick={() => setFilter(false)}     className={filter === false    ? 'active' : ''}>Pending</button>
-        <button onClick={() => setFilter(true)}      className={filter === true     ? 'active' : ''}>Completed</button>
-      </div>
-
-      {/* Task List */}
-      <div className="task-list">
-        {tasks.length === 0 && <p className="empty">No tasks yet. Add one above!</p>}
-        {tasks.map((task) => {
-          const dueStatus = getDueStatus(task.due_date);
-          return (
-            <div
-              key={task.id}
-              className={`task-card ${task.done ? 'done' : ''} ${dueStatus?.type === 'overdue' && !task.done ? 'overdue' : ''}`}
-            >
-              {editingTask === task.id ? (
-                <div className="edit-form">
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                  />
-                  <select
-                    value={editPriority}
-                    onChange={(e) => setEditPriority(e.target.value)}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                  <input
-                    type="date"
-                    value={editDueDate}
-                    onChange={(e) => setEditDueDate(e.target.value)}
-                  />
-                  <div className="edit-actions">
-                    <button onClick={() => handleEditSave(task)} className="done-btn">Save</button>
-                    <button onClick={handleEditCancel}           className="delete-btn">Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="task-info">
-                    <h3>{task.title}</h3>
-                    {task.description && <p>{task.description}</p>}
-                    <div className="task-meta">
-                      <span className={`badge ${task.priority}`}>{task.priority}</span>
-                      {dueStatus && !task.done && (
-                        <span className={`due-badge ${dueStatus.type}`}>
-                          📅 {dueStatus.label}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="task-actions">
-                    {!task.done && (
-                      <>
-                        <button onClick={() => handleDone(task.id)}  className="done-btn">✓ Done</button>
-                        <button onClick={() => handleEditOpen(task)}  className="edit-btn">✎ Edit</button>
-                      </>
-                    )}
-                    <button onClick={() => handleDelete(task.id)} className="delete-btn">✕ Delete</button>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-export default Dashboard;
+      {/* Search Bar */}
+      <div className="search-bar">
+        <span className="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="clear-search" onClick={() => setSearch('')}>
