@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { register } from '../api';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 function Register() {
   const [form,    setForm]    = useState({ username: '', password: '', full_name: '', email: '' });
-  const [error,   setError]   = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -16,13 +15,12 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       await register(form);
-      setSuccess('Account created! Redirecting to login...');
+      toast.success('Account created! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed');
+      toast.error(err.response?.data?.detail || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -33,8 +31,6 @@ function Register() {
       <div className="auth-box">
         <h1>Task Manager</h1>
         <h2>Create Account</h2>
-        {error   && <p className="error">{error}</p>}
-        {success && <p className="success">{success}</p>}
         <form onSubmit={handleRegister}>
           <input type="text"     name="full_name" placeholder="Full Name" onChange={handleChange} required />
           <input type="text"     name="username"  placeholder="Username"  onChange={handleChange} required />

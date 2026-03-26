@@ -1,26 +1,25 @@
 import React, { useState } from 'react';
 import { login } from '../api';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       const res = await login({ username, password });
-      // Save token to localStorage
       localStorage.setItem('token', res.data.access_token);
       localStorage.setItem('username', username);
+      toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err) {
-      setError('Incorrect username or password');
+      toast.error('Incorrect username or password');
     } finally {
       setLoading(false);
     }
@@ -31,7 +30,6 @@ function Login() {
       <div className="auth-box">
         <h1>Task Manager</h1>
         <h2>Login</h2>
-        {error && <p className="error">{error}</p>}
         <form onSubmit={handleLogin}>
           <input
             type="text"
