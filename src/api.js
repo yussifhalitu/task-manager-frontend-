@@ -6,6 +6,7 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+// Attach token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -13,6 +14,22 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Handle expired token responses
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401)
+      {
+      // Token expired or invalid
+      // Clear everything and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const register   = (data) => api.post('/auth/register', data);
 export const login      = (data) => api.post('/auth/login',
